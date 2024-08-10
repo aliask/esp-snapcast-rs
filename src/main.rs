@@ -4,7 +4,7 @@ use snapcast_client::decoder::{Decode, Decoder};
 use snapcast_client::playback::Player;
 use snapcast_client::proto::TimeVal;
 
-use esp_idf_hal::gpio::{Gpio18, Gpio19, Gpio21};
+use esp_idf_hal::gpio::{AnyIOPin, AnyOutputPin};
 use esp_idf_hal::i2s::I2S0;
 use esp_idf_hal::modem::Modem;
 use esp_idf_hal::peripherals::Peripherals;
@@ -184,12 +184,14 @@ fn main() -> ! {
 
     let mac = setup(&mut peripherals.modem).unwrap();
     let i2s = peripherals.i2s0;
-    let dout = peripherals.pins.gpio19;
+    let dout = peripherals.pins.gpio11.into();
 
-    let bclk = peripherals.pins.gpio18;
-    let ws = peripherals.pins.gpio21;
+    let bclk = peripherals.pins.gpio12.into();
+    let ws = peripherals.pins.gpio10.into();
 
-    let res = app_main(mac, i2s, dout, bclk, ws);
+    let nmute = peripherals.pins.gpio13.into();
+
+    let res = app_main(mac, i2s, dout, bclk, ws, nmute);
     log::error!("Main returned with {res:?}; will reboot now");
     unsafe { esp_restart() };
 }
@@ -220,8 +222,8 @@ fn setup(modem: &mut Modem) -> anyhow::Result<String> {
     Ok(mac)
 }
 
-fn app_main(mac: String, i2s: I2S0, dout: Gpio19, bclk: Gpio18, ws: Gpio21) -> anyhow::Result<()> {
-    let mut player_builder = I2sPlayerBuilder::new(i2s, dout, bclk, ws);
+fn app_main(mac: String, i2s: I2S0, dout: AnyIOPin, bclk: AnyIOPin, ws: AnyIOPin, nmute: AnyOutputPin) -> anyhow::Result<()> {
+    let mut player_builder = I2sPlayerBuilder::new(i2s, dout, bclk, ws, nmute);
 
     let name = "esp32";
 
@@ -328,7 +330,7 @@ fn connection_main<
                 // Delay configuration until player is instantiated
                 start_vol = s.volume;
                 if let Some(p) = p.as_mut() {
-                    p.set_volume(s.volume)?;
+                    p.set_volume(if s.muted { 0 } else { s.volume })?;
                 }
             }
             Message::Nothing => {
