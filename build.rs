@@ -10,7 +10,6 @@ pub struct Config {
 }
 
 fn main() -> anyhow::Result<()> {
-
     if !std::path::Path::new("cfg.toml").exists() {
         anyhow::bail!("You need to create a `cfg.toml`! Use `cfg.toml.example` as a template.");
     }

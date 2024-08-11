@@ -199,7 +199,8 @@ fn setup(modem: &mut Modem) -> anyhow::Result<String> {
     log::info!("Connecting to SSID '{:?}'", CONFIG.wifi_ssid);
 
     let nvsp = EspDefaultNvsPartition::take().unwrap();
-    let mac = wifi::configure(CONFIG.wifi_ssid, CONFIG.wifi_pass, nvsp, modem).expect("Could not configure wifi");
+    let mac = wifi::configure(CONFIG.wifi_ssid, CONFIG.wifi_pass, nvsp, modem)
+        .expect("Could not configure wifi");
 
     log::info!("Syncing time via SNTP");
     let _sntp = start_and_sync_sntp()?;
@@ -212,7 +213,14 @@ fn setup(modem: &mut Modem) -> anyhow::Result<String> {
     Ok(mac)
 }
 
-fn app_main(mac: String, i2s: I2S0, dout: AnyIOPin, bclk: AnyIOPin, ws: AnyIOPin, nmute: AnyOutputPin) -> anyhow::Result<()> {
+fn app_main(
+    mac: String,
+    i2s: I2S0,
+    dout: AnyIOPin,
+    bclk: AnyIOPin,
+    ws: AnyIOPin,
+    nmute: AnyOutputPin,
+) -> anyhow::Result<()> {
     let mut player_builder = I2sPlayerBuilder::new(i2s, dout, bclk, ws, nmute);
 
     let name = "esp32";

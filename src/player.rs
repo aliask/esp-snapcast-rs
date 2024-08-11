@@ -2,7 +2,7 @@ use anyhow::anyhow;
 
 use esp_idf_hal::delay::TickType;
 use esp_idf_hal::gpio;
-use esp_idf_hal::gpio::{InputPin, OutputPin, AnyOutputPin, PinDriver};
+use esp_idf_hal::gpio::{AnyOutputPin, InputPin, OutputPin, PinDriver};
 use esp_idf_hal::i2s;
 use esp_idf_hal::i2s::config;
 use esp_idf_hal::i2s::I2S0;
@@ -37,7 +37,13 @@ impl<
         R: Peripheral<P = OR> + 'static,
     > I2sPlayerBuilder<OP, OQ, OR, P, Q, R>
 {
-    pub fn new(i2s: I2S0, dout: P, bclk: Q, ws: R, nmute_pin: AnyOutputPin) -> I2sPlayerBuilder<OP, OQ, OR, P, Q, R> {
+    pub fn new(
+        i2s: I2S0,
+        dout: P,
+        bclk: Q,
+        ws: R,
+        nmute_pin: AnyOutputPin,
+    ) -> I2sPlayerBuilder<OP, OQ, OR, P, Q, R> {
         I2sPlayerBuilder {
             i2s: Some(i2s),
             dout: Some(dout),
@@ -157,5 +163,4 @@ impl Player for I2sPlayer {
     fn sample_rate(&self) -> u16 {
         self.sample_rate
     }
-
 }
