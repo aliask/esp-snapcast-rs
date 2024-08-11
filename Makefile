@@ -1,10 +1,8 @@
-.PHONY: build flash flashm monitor only_build
+.PHONY: build flash flashm monitor
 ELF = target/xtensa-esp32s3-espidf/release/esp-snapcast
 SERIAL_DEVICE = /dev/ttyACM0
 
-build: only_build
-	python3 replacer.py ${ELF}
-only_build:
+build:
 	cargo build --release
 monitor:
 	espflash monitor -p ${SERIAL_DEVICE}

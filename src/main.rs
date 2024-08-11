@@ -20,16 +20,15 @@ mod wifi;
 
 use player::{I2sPlayer, I2sPlayerBuilder};
 
-const SSID: [u8; 32] = [
-    0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a,
-    0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x00,
-];
-const PASS: [u8; 64] = [
-    0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b,
-    0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b,
-    0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b,
-    0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b, 0x00,
-];
+#[toml_cfg::toml_config]
+pub struct Config {
+    #[default("")]
+    wifi_ssid: &'static str,
+    #[default("")]
+    wifi_pass: &'static str,
+    #[default("")]
+    server_address: &'static str,
+}
 
 enum Sample {
     Data(Vec<u8>),
@@ -197,19 +196,10 @@ fn main() -> ! {
 }
 
 fn setup(modem: &mut Modem) -> anyhow::Result<String> {
-    let ssid = std::ffi::CStr::from_bytes_until_nul(&SSID)
-        .expect("Invalid build SSID")
-        .to_str()
-        .expect("SSID is not UTF-8");
-    let pass = std::ffi::CStr::from_bytes_until_nul(&PASS)
-        .expect("Invalid build PASS")
-        .to_str()
-        .expect("PASS is not UTF-8");
-
-    log::info!("Connecting to SSID '{ssid}'");
+    log::info!("Connecting to SSID '{:?}'", CONFIG.wifi_ssid);
 
     let nvsp = EspDefaultNvsPartition::take().unwrap();
-    let mac = wifi::configure(ssid, pass, nvsp, modem).expect("Could not configure wifi");
+    let mac = wifi::configure(CONFIG.wifi_ssid, CONFIG.wifi_pass, nvsp, modem).expect("Could not configure wifi");
 
     log::info!("Syncing time via SNTP");
     let _sntp = start_and_sync_sntp()?;
@@ -242,7 +232,7 @@ fn app_main(mac: String, i2s: I2S0, dout: AnyIOPin, bclk: AnyIOPin, ws: AnyIOPin
         // TODO: discover stream
         //let client = client.connect("192.168.2.131:1704")?;
         let client = client
-            .connect("192.168.2.183:1704")
+            .connect(CONFIG.server_address)
             .context("Could not connect to SnapCast server")?;
 
         let player_2 = player.clone();
